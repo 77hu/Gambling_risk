@@ -21,7 +21,7 @@ Thumbs.db
 # Database
 *.sqlite3
 
-# Large model files
+# Large model files (>90MB, documented in README)
 static/Vector_model/model.safetensors
 static/Vector_model/pytorch_model.bin
 static/Vector_model/temp_files.zip

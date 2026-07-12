@@ -6,11 +6,7 @@ from sentence_transformers import SentenceTransformer
 from django.conf import settings
 class FaissVectorStore:
 
-    def __init__(self, dim: int, index_file: str = None, meta_file: str = None):
-        if index_file is None:
-            index_file = os.path.join(settings.BASE_DIR, 'static', 'Faiss_vector_databases', 'vector.index')
-        if meta_file is None:
-            meta_file = os.path.join(settings.BASE_DIR, 'static', 'Faiss_vector_databases', 'meta.json')
+    def __init__(self, dim: int, index_file: str = r"D:\crawl_project\Gambling_risk\static\Faiss_vector_databases\vector.index", meta_file: str = r"D:\crawl_project\Gambling_risk\static\Faiss_vector_databases\meta.json"):
         self.dim = dim
         self.index_file=index_file
         self.meta_file=meta_file
@@ -113,7 +109,7 @@ class FaissVectorStore:
 
     def text_to_vectors(self,texts: list) -> np.ndarray:
 
-        model_path=os.path.join(settings.BASE_DIR, 'static', 'Vector_model')
+        model_path=r'D:\crawl_project\Gambling_risk\static\Vector_model'
         model = SentenceTransformer(model_path)
         """将文本列表转换为768维向量数组（shape: [n, 768]）"""
         vectors = model.encode(texts, convert_to_numpy=True)
