@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.key
+*.pem
+
+# Database
+*.sqlite3
+
+# Large model files
+static/Vector_model/model.safetensors
+static/Vector_model/pytorch_model.bin
+static/Vector_model/temp_files.zip
+static/Vector_model/.git
+static/Vector_model/.gitattributes
+static/Vector_model/openvino/
+static/Vector_model/.git/
+
+# Faiss index files
+static/Faiss_vector_databases/*.index
+static/Faiss_vector_databases/*.json
+
+# Media
+media/
+
+# Django
+db.sqlite3

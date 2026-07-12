@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL安全分析平台</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0B132B',
+                        secondary: '#1C2541',
+                        accent: '#3A5065',
+                        neon: '#5BC0BE',
+                        neon2: '#6FFFE9',
+                        danger: '#FF595E',
+                        warning: '#FFD166',
+                        success: '#06D6A0',
+                    },
+                    fontFamily: {
+                        tech: ['Rajdhani', 'sans-serif', 'system-ui'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { 'box-shadow': '0 0 5px rgba(91, 192, 190, 0.5), 0 0 10px rgba(91, 192, 190, 0.3)' },
+                            '100%': { 'box-shadow': '0 0 10px rgba(91, 192, 190, 0.8), 0 0 20px rgba(111, 255, 233, 0.6)' }
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .glass {
+                background: rgba(28, 37, 65, 0.6);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(91, 192, 190, 0.2);
+            }
+            .text-shadow {
+                text-shadow: 0 0 8px rgba(91, 192, 190, 0.7);
+            }
+            .border-glow {
+                box-shadow: 0 0 5px rgba(91, 192, 190, 0.5), 0 0 10px rgba(91, 192, 190, 0.3);
+            }
+            .bg-grid {
+                background-image:
+                    linear-gradient(rgba(91, 192, 190, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(91, 192, 190, 0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+        }
+    </style>
+
+    <!-- 引入Google字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-primary bg-grid min-h-screen font-tech text-gray-100 overflow-x-hidden" style="height: 1000px">
+    <!-- 装饰性网格背景 -->
+    <div class="fixed inset-0 bg-grid opacity-30 pointer-events-none" ></div>
+
+    <!-- 顶部导航 -->
+    <header class="glass sticky top-0 z-50 border-b border-neon/30">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-shield text-neon text-2xl animate-pulse-slow"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="text-neon">URL</span>Guard
+                </h1>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <a href="#" class="text-neon hover:text-neon2 transition-colors duration-300 flex items-center">
+                    <i class="fa fa-home mr-1"></i> 首页
+                </a>
+                <a href="#" class="text-gray-300 hover:text-neon transition-colors duration-300 flex items-center">
+                    <i class="fa fa-history mr-1"></i> 历史
+                </a>
+                <a href="#" class="text-gray-300 hover:text-neon transition-colors duration-300 flex items-center">
+                    <i class="fa fa-question-circle mr-1"></i> 帮助
+                </a>
+                <a href="{% url 'logout' %}" class="text-gray-300 hover:text-neon transition-colors duration-300 flex items-center">
+                    <i class="fa fa-sign-out mr-1"></i> 退出
+                </a>
+            </nav>
+            <button class="md:hidden text-neon">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        <!-- 页面标题 -->
+        <div class="text-center mb-10 md:mb-16">
+            <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-3 text-white">
+                URL安全<span class="text-neon text-shadow">智能分析</span>平台
+            </h2>
+            <p class="text-gray-400 max-w-2xl mx-auto text-lg">
+                输入URL地址,将为您分析其安全性、合法性及潜在风险,
+                提供全面的风险评估报告
+            </p>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="max-w-3xl mx-auto mb-12 glass rounded-xl p-6 md:p-8 border-glow animate-glow">
+            <form method="post" id="urlForm" class="space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label for="url" class="block text-gray-300 mb-2 font-medium">
+                        <i class="fa fa-link text-neon mr-2"></i>URL地址（每行一个）
+                    </label>
+                    <textarea
+                        id="url"
+                        name="url"
+                        rows="4"
+                        class="w-full bg-secondary/80 border border-accent rounded-lg p-4 text-gray-100 focus:border-neon focus:outline-none transition-all duration-300 resize-none"
+                        placeholder="例如：  https://example.com  &#10;https://test.com  "
+                    >{{ request.POST.url|default:'' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">支持批量输入，每行一个URL地址</p>
+                </div>
+
+                {% if error %}
+                <div class="bg-danger/20 border border-danger/40 rounded-lg p-4 text-danger">
+                    <i class="fa fa-exclamation-circle mr-2"></i>{{ error }}
+                </div>
+                {% endif %}
+
+                <button
+                    type="submit"
+                    id="analyzeBtn"
+                    class="w-full bg-gradient-to-r from-neon to-neon2 text-primary font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
+                >
+                    <i class="fa fa-search mr-2"></i>
+                    <span>开始智能分析</span>
+                    <div id="loadingIndicator" class="hidden ml-3">
+                        <i class="fa fa-circle-o-notch fa-spin"></i>
+                    </div>
+                </button>
+            </form>
+        </div>
+
+        <!-- 动态分析结果区域（初始隐藏） -->
+<!--        <div id="analysisResults" class="max-w-3xl mx-auto mb-12 hidden"></div>-->
+            <div id="analysisResults" class="max-w-3xl mx-auto mb-12 hidden">
+                {% if results and results|length > 0 %}
+                <div class="glass rounded-xl p-6 md:p-8 border-glow">
+                    <h3 class="text-xl md:text-2xl font-bold mb-5 flex items-center">
+                        <i class="fa fa-bar-chart text-neon mr-2"></i>分析结果
+                        <span class="ml-3 text-sm bg-accent/50 text-gray-300 px-3 py-1 rounded-full">
+                            共 {{ results|length }} 个URL
+                        </span>
+                        <a href="{% url 'recommend' %}?q={{ result.keywords|join:' '|urlencode }}" class="ml-3 text-sm bg-accent/50 text-gray-300 px-3 py-1 rounded-full">
+                        猜你想了解
+                    </a>
+                    </h3>
+                    <div class="space-y-5">
+                        {% for result in results %}
+                        <div class="glass rounded-lg p-4 border border-accent/30">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="break-all max-w-[70%]">
+                                    <i class="fa fa-globe text-neon mr-2"></i>
+                                    <span class="text-sm md:text-base font-medium">{{ result.url }}</span>
+                                </div>
+
+                                {% if result.url_legitimacy == '合法' %}
+                                <span class="bg-success/20 text-success text-xs px-2 py-1 rounded-full border border-success/30">
+                                    <i class="fa fa-check-circle mr-1"></i>合法
+                                </span>
+                                {% elif result.url_legitimacy == '可疑' %}
+                                <span class="bg-warning/20 text-warning text-xs px-2 py-1 rounded-full border border-warning/30">
+                                    <i class="fa fa-exclamation-triangle mr-1"></i>可疑
+                                </span>
+                                {% elif result.url_legitimacy == '非法' %}
+                                <span class="bg-danger/20 text-danger text-xs px-2 py-1 rounded-full border border-danger/30">
+                                    <i class="fa fa-times-circle mr-1"></i>非法
+                                </span>
+                                {% else %}
+                                <span class="bg-gray-700/20 text-gray-400 text-xs px-2 py-1 rounded-full border border-gray-600/30">
+                                    {{ result.url_legitimacy }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-2">
+                                <p class="text-sm text-gray-400 mb-1">赌博风险:</p>
+                                {% if result.gambling_risk %}
+                                <div class="flex items-center text-danger">
+                                    <i class="fa fa-warning mr-2"></i>
+                                    <span>高风险 - 可能包含赌博内容</span>
+                                </div>
+                                {% else %}
+                                <div class="flex items-center text-success">
+                                    <i class="fa fa-check mr-2"></i>
+                                    <span>低风险 - 未检测到赌博内容</span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <p class="text-sm text-gray-400 mt-2">风险分析:</p>
+                            <p class="text-sm text-gray-300 mt-1">{{ result.risk_analysis }}</p>
+
+                            {% if result.keywords and result.keywords|length > 0 %}
+                            <a href="{% url 'recommend' %}?q={{ result.keywords|join:' '|urlencode }}" class="ml-3 text-sm bg-accent/50 text-gray-300 px-3 py-1 rounded-full" style="position: relative; top: 50px; left: 560px;">
+                                        猜你想了解
+                                    </a>
+                            <div class="mt-3">
+                                <p class="text-sm text-gray-400 mb-1">关键词:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    {% for keyword in result.keywords %}
+
+                                    <span class="bg-accent/30 text-neon text-xs px-2 py-1 rounded-full">
+                                        {{ keyword }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        <!-- 功能特点 -->
+        <div class="mt-16 mb-10">
+            <h3 class="text-2xl font-bold mb-8 text-center">
+                <span class="text-neon">智能</span>分析能力
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass rounded-xl p-6 transition-transform duration-300 hover:-translate-y-1 border border-transparent hover:border-neon/30">
+                    <div class="w-12 h-12 bg-neon/20 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-shield text-neon text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">合法性验证</h4>
+                    <p class="text-gray-400">
+                        基于多维度数据验证URL合法性，识别钓鱼网站和恶意链接
+                    </p>
+                </div>
+
+                <div class="glass rounded-xl p-6 transition-transform duration-300 hover:-translate-y-1 border border-transparent hover:border-neon/30">
+                    <div class="w-12 h-12 bg-neon/20 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-line-chart text-neon text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">风险评估</h4>
+                    <p class="text-gray-400">
+                        智能分析内容风险，精准识别赌博、诈骗等不良信息
+                    </p>
+                </div>
+
+                <div class="glass rounded-xl p-6 transition-transform duration-300 hover:-translate-y-1 border border-transparent hover:border-neon/30">
+                    <div class="w-12 h-12 bg-neon/20 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-bolt text-neon text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">批量处理</h4>
+                    <p class="text-gray-400">
+                        支持多URL同时分析，高效处理大量链接，节省时间成本
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="glass border-t border-neon/30 py-8 mt-16" style="height: 100px; position: relative; top: -120px;">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-shield text-neon"></i>
+                        <span class="font-bold text-lg">
+                            <span class="text-neon">URL</span>Guard
+                        </span>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">智能URL安全分析平台</p>
+                </div>
+
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-neon transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-neon transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-neon transition-colors">
+                        <i class="fa fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-6 pt-6 text-center text-gray-500 text-sm" style="position: relative; top: -75px;">
+                &copy; {% now "Y" %} URLGuard 安全分析平台 | 保护您的网络浏览安全
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取结果容器
+        const resultsContainer = document.getElementById('analysisResults');
+
+        // 如果后端传入了 results（即容器内有内容），则显示它
+        if (resultsContainer && resultsContainer.children.length > 0) {
+            resultsContainer.classList.remove('hidden');
+
+            // 可选：平滑滚动到结果区域
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // 表单提交时显示加载状态
+        const form = document.getElementById('urlForm');
+        if (form) {
+            form.addEventListener('submit', function () {
+                const submitBtn = document.getElementById('analyzeBtn');
+                const loadingIndicator = document.getElementById('loadingIndicator');
+
+                if (submitBtn && loadingIndicator) {
+                    submitBtn.disabled = true;
+                    loadingIndicator.classList.remove('hidden');
+                    // 注意：不阻止默认提交，让 Django 正常处理 POST
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

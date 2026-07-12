@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猜你想了解</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 引入 Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置 Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0B132B',
+                        secondary: '#1C2541',
+                        accent: '#3A5065',
+                        neon: '#5BC0BE',
+                        neon2: '#6FFFE9',
+                        danger: '#FF595E',
+                        warning: '#FFD166',
+                        success: '#06D6A0',
+                    },
+                    fontFamily: {
+                        tech: ['Rajdhani', 'sans-serif', 'system-ui'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { 'box-shadow': '0 0 5px rgba(91, 192, 190, 0.5), 0 0 10px rgba(91, 192, 190, 0.3)' },
+                            '100%': { 'box-shadow': '0 0 10px rgba(91, 192, 190, 0.8), 0 0 20px rgba(111, 255, 233, 0.6)' }
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                background: rgba(28, 37, 65, 0.6);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(91, 192, 190, 0.2);
+            }
+            .text-shadow {
+                text-shadow: 0 0 8px rgba(91, 192, 190, 0.7);
+            }
+            .bg-grid {
+                background-image:
+                    linear-gradient(rgba(91, 192, 190, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(91, 192, 190, 0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+        }
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-primary bg-grid min-h-screen font-tech text-gray-100 overflow-x-hidden" style="height: 1000px">
+    <!-- 装饰性网格背景 -->
+    <div class="fixed inset-0 bg-grid opacity-30 pointer-events-none"></div>
+
+    <!-- 顶部导航 -->
+    <header class="glass sticky top-0 z-50 border-b border-neon/30">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-shield text-neon text-2xl animate-pulse-slow"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="text-neon">URL</span>Guard
+                </h1>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <a href="{% url 'home' %}" class="text-neon hover:text-neon2 transition-colors duration-300 flex items-center">
+                    <i class="fa fa-home mr-1"></i> 首页
+                </a>
+                <a href="#" class="text-gray-300 hover:text-neon transition-colors duration-300 flex items-center">
+                    <i class="fa fa-history mr-1"></i> 历史
+                </a>
+                <a href="#" class="text-gray-300 hover:text-neon transition-colors duration-300 flex items-center">
+                    <i class="fa fa-question-circle mr-1"></i> 帮助
+                </a>
+                <a href="{% url 'logout' %}" class="text-gray-300 hover:text-neon transition-colors duration-300 flex items-center">
+                    <i class="fa fa-sign-out mr-1"></i> 退出
+                </a>
+            </nav>
+            <button class="md:hidden text-neon">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold mb-10 text-center">
+                <span class="text-neon text-shadow animate-glow">猜你想了解</span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in results %}
+                <div class="glass border border-accent/20 rounded-xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-neon/40">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center">
+                            <i class="fa fa-link text-neon mr-2"></i>
+                            <div class="text-sm text-gray-200 truncate max-w-[180px]">{{ item.url }}</div>
+                        </div>
+                        <button class="text-xs text-gray-500 hover:text-neon transition" onclick="navigator.clipboard.writeText('{{ item.url|escapejs }}')">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        {% if item.url_legitimacy == '合法' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-success/30 to-emerald-400/20 text-success border border-success/30">
+                            <i class="fa fa-check-circle mr-1"></i> 合法
+                        </span>
+                        {% elif item.url_legitimacy == '可疑' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-warning/30 to-amber-400/20 text-warning border border-warning/30">
+                            <i class="fa fa-exclamation-triangle mr-1"></i> 可疑
+                        </span>
+                        {% elif item.url_legitimacy == '非法' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-danger/30 to-red-500/20 text-danger border border-danger/30">
+                            <i class="fa fa-times-circle mr-1"></i> 非法
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-accent/30 text-gray-300 border border-gray-600/30">
+                            {{ item.url_legitimacy }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-400 mb-1">赌博风险</p>
+                        <div class="flex items-center text-sm">
+                            {% if item.gambling_risk %}
+                            <i class="fa fa-exclamation-triangle text-danger mr-1.5"></i>
+                            <span class="text-danger">高风险</span>
+                            {% else %}
+                            <i class="fa fa-check-circle text-success mr-1.5"></i>
+                            <span class="text-success">低风险</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="text-xs text-gray-400 mb-1">风险分析</p>
+                        <p class="text-sm text-gray-300 line-clamp-2">{{ item.risk_analysis }}</p>
+                    </div>
+
+                    {% if item.keywords %}
+                    <div class="mt-2">
+                        <p class="text-xs text-gray-400 mb-1">关键词</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for keyword in item.keywords %}
+                            <a href="{% url 'recommend' %}?q={{ keyword|urlencode }}" class="inline-block bg-accent/30 hover:bg-accent/50 text-neon text-xs px-2 py-0.5 rounded-full transition-colors">
+                                {{ keyword }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4 pt-3 border-t border-accent/20 text-center">
+                        <a href="{% url 'home' %}?url={{ item.url|urlencode }}" class="text-xs text-neon hover:text-neon2 transition inline-flex items-center">
+                            <i class="fa fa-refresh mr-1"></i> 重新分析
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-16">
+                    <div class="text-5xl mb-4 text-gray-700">🔍</div>
+                    <p class="text-gray-400 text-lg">暂无推荐内容</p>
+                    <p class="text-gray-500 text-sm mt-2">尝试在首页提交更多 URL 获取推荐</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="glass border-t border-neon/30 py-8 mt-16" style="height: 100px; position: relative; top: -100px;">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-shield text-neon"></i>
+                        <span class="font-bold text-lg">
+                            <span class="text-neon">URL</span>Guard
+                        </span>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">智能URL安全分析平台</p>
+                </div>
+
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-neon transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-neon transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-neon transition-colors">
+                        <i class="fa fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-6 pt-6 text-center text-gray-500 text-sm" style="position: relative; top: -75px;">
+                &copy; {% now "Y" %} URLGuard 安全分析平台 | 保护您的网络浏览安全
+            </div>
+        </div>
+    </footer>
+
+    <!-- 优化复制提示（可选） -->
+    <script>
+        document.querySelectorAll('[onclick^="navigator.clipboard"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.innerHTML = '<i class="fa fa-check text-success"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa fa-copy"></i>';
+                }, 1500);
+            });
+        });
+    </script>
+</body>
+</html>
